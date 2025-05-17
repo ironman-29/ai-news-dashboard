@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 뉴스 대시보드</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .search-box input {
+            padding: 10px 15px;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .category-filter {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .category-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: #e2e8f0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .category-btn.active {
+            background-color: #4299e1;
+            color: white;
+        }
+        
+        .category-btn:hover:not(.active) {
+            background-color: #cbd5e0;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 250px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background-color: #f0f5ff;
+            padding: 15px;
+            text-align: center;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #2D3748;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+        }
+        
+        .card-body {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        
+        .infographic-icon {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .infographic-icon svg {
+            width: 80px;
+            height: 80px;
+        }
+        
+        /* 인포그래픽 스타일 */
+        .primary-color {
+            fill: #4299e1;
+        }
+        
+        .secondary-color {
+            fill: #667eea;
+        }
+        
+        .accent-color {
+            fill: #ed64a6;
+        }
+        
+        .neutral-color {
+            fill: #718096;
+        }
+        
+        .tech-color {
+            fill: #38b2ac;
+        }
+        
+        .card-footer {
+            padding: 15px;
+            background-color: #f9fafb;
+            text-align: center;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #4299e1;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background-color: #3182ce;
+        }
+        
+        .view-options {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .view-btn {
+            background-color: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .view-btn.active {
+            background-color: #4299e1;
+            color: white;
+        }
+        
+        .view-btn:hover:not(.active) {
+            background-color: #cbd5e0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .iframe-container {
+            display: none; /* 기본적으로 숨김 */
+            height: 100vh;
+            margin-top: 20px;
+        }
+        
+        .iframe-view .iframe-container {
+            display: block;
+        }
+        
+        .iframe-view .grid {
+            display: none;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .iframe-nav {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .iframe-nav button {
+            white-space: nowrap;
+            padding: 8px 16px;
+            background-color: #e2e8f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .iframe-nav button.active {
+            background-color: #4299e1;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI 뉴스 대시보드</h1>
+            <p>다양한 AI 뉴스 사이트를 한 곳에서 확인하세요</p>
+        </header>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="뉴스 사이트 검색...">
+        </div>
+        
+        <div class="category-filter" id="category-filter">
+            <button class="category-btn active" data-category="all">전체</button>
+            <button class="category-btn" data-category="korean">한국 AI 뉴스</button>
+            <button class="category-btn" data-category="tech">테크 뉴스</button>
+            <button class="category-btn" data-category="global">글로벌 AI 뉴스</button>
+            <button class="category-btn" data-category="academic">학술 AI 뉴스</button>
+            <button class="category-btn" data-category="startup">스타트업 뉴스</button>
+        </div>
+        
+        <div class="view-options">
+            <button class="view-btn active" id="grid-view-btn">그리드 보기</button>
+            <button class="view-btn" id="iframe-view-btn">사이트 보기</button>
+        </div>
+        
+        <div class="iframe-container">
+            <div class="iframe-nav" id="iframe-nav"></div>
+            <iframe id="site-iframe" src=""></iframe>
+        </div>
+        
+        <div class="grid" id="sites-grid">
+            <!-- 사이트 카드가 자바스크립트로 여기에 추가됩니다 -->
+        </div>
+    </div>
+    
+    <script>
+        // AI 뉴스 사이트 데이터
+        const ai_news_sites = [
+            {"name": "AI타임스", "url": "https://www.aitimes.com/", "category": "korean"},
+            {"name": "인공지능신문", "url": "https://www.aitimes.kr/", "category": "korean"},
+            {"name": "더에이아이", "url": "https://www.newstheai.com/", "category": "korean"},
+            {"name": "AI포스트", "url": "https://www.aipostkorea.com/", "category": "korean"},
+            {"name": "AI매터스", "url": "https://aimatters.co.kr/", "category": "korean"},
+            {"name": "IT월드 AI.ML", "url": "https://www.itworld.co.kr/t/69500/AI%E3%86%8DML", "category": "tech"},
+            {"name": "테크레시피 인텔리전스", "url": "https://techrecipe.co.kr/category/intelligence", "category": "tech"},
+            {"name": "더테크 AI.로봇", "url": "https://www.the-tech.co.kr/news/section_list_all.html?sec_no=140", "category": "tech"},
+            {"name": "테크수다 AI", "url": "https://techsuda.com/tag/ai/", "category": "tech"},
+            {"name": "AI 뉴스", "url": "https://www.artificialintelligence-news.com/", "category": "global"},
+            {"name": "AI 매거진", "url": "https://aimagazine.com/", "category": "global"},
+            {"name": "MIT AI", "url": "https://news.mit.edu/topic/artificial-intelligence2", "category": "academic"},
+            {"name": "벤처비트", "url": "https://venturebeat.com/", "category": "startup"},
+        ];
+        
+        // 각 사이트별 인포그래픽 아이콘 생성 함수
+        function getSiteIcon(siteName) {
+            // 사이트 이름에 따른 분류 정보 가져오기
+            const site = ai_news_sites.find(s => s.name === siteName);
+            const category = site ? site.category : 'default';
+            
+            // 카테고리별 아이콘 패턴
+            const icons = {
+                // 한국 AI 뉴스 사이트
+                korean: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="40" class="primary-color" opacity="0.2" />
+                    <path d="M30 30 L70 30 L70 70 L30 70 Z" class="primary-color" fill="none" stroke-width="3" stroke="currentColor" />
+                    <text x="50" y="55" font-size="24" font-weight="bold" text-anchor="middle" fill="#4299e1">AI</text>
+                    <path d="M20 80 L80 80" stroke="#4299e1" stroke-width="2" />
+                    <path d="M25 85 L75 85" stroke="#4299e1" stroke-width="1.5" />
+                </svg>`,
+                
+                // 테크 뉴스 사이트
+                tech: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="20" width="60" height="40" rx="5" class="tech-color" />
+                    <circle cx="50" cy="40" r="10" fill="white" />
+                    <path d="M40 55 L60 55" stroke="white" stroke-width="3" />
+                    <path d="M35 62 L65 62" stroke="white" stroke-width="2" />
+                    <path d="M25 70 L75 85" stroke="#38b2ac" stroke-width="2" fill="none" />
+                    <circle cx="35" cy="75" r="3" fill="#38b2ac" />
+                    <circle cx="50" cy="80" r="3" fill="#38b2ac" />
+                    <circle cx="65" cy="85" r="3" fill="#38b2ac" />
+                </svg>`,
+                
+                // 글로벌 AI 뉴스 사이트
+                global: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="#667eea" stroke-width="2" />
+                    <path d="M50 15 L50 85" stroke="#667eea" stroke-width="1" />
+                    <path d="M15 50 L85 50" stroke="#667eea" stroke-width="1" />
+                    <path d="M26 26 L74 74" stroke="#667eea" stroke-width="1" opacity="0.5" />
+                    <path d="M26 74 L74 26" stroke="#667eea" stroke-width="1" opacity="0.5" />
+                    <circle cx="50" cy="50" r="15" class="secondary-color" opacity="0.7" />
+                    <text x="50" y="54" font-size="12" font-weight="bold" text-anchor="middle" fill="white">AI</text>
+                </svg>`,
+                
+                // 학술 AI 뉴스 사이트
+                academic: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 75 L50 25 L80 75 Z" fill="none" stroke="#ed64a6" stroke-width="2" />
+                    <path d="M35 75 L50 50 L65 75 Z" class="accent-color" opacity="0.8" />
+                    <circle cx="50" cy="40" r="8" fill="#ed64a6" />
+                    <rect x="40" y="75" width="20" height="10" class="accent-color" />
+                    <text x="50" y="40" font-size="8" font-weight="bold" text-anchor="middle" fill="white">AI</text>
+                </svg>`,
+                
+                // 스타트업 관련 사이트
+                startup: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30 70 L50 30 L70 70 Z" class="neutral-color" opacity="0.7" />
+                    <path d="M20 70 L50 20 L80 70" fill="none" stroke="#718096" stroke-width="2" />
+                    <path d="M50 70 L50 90" stroke="#718096" stroke-width="2" />
+                    <circle cx="50" cy="50" r="10" fill="#718096" />
+                    <path d="M40 50 L60 50" stroke="white" stroke-width="2" />
+                    <path d="M50 40 L50 60" stroke="white" stroke-width="2" />
+                </svg>`,
+                
+                // 기본 아이콘
+                default: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="25" width="50" height="50" rx="10" class="primary-color" opacity="0.2" />
+                    <circle cx="50" cy="50" r="20" class="primary-color" opacity="0.6" />
+                    <text x="50" y="55" font-size="16" font-weight="bold" text-anchor="middle" fill="#4299e1">AI</text>
+                </svg>`
+            };
+            
+            return icons[category] || icons.default;
+        }
+        
+        const gridContainer = document.getElementById('sites-grid');
+        const searchInput = document.getElementById('search-input');
+        const gridViewBtn = document.getElementById('grid-view-btn');
+        const iframeViewBtn = document.getElementById('iframe-view-btn');
+        const siteIframe = document.getElementById('site-iframe');
+        const iframeNav = document.getElementById('iframe-nav');
+        
+        // 그리드에 사이트 카드 생성
+        function createSiteCards() {
+            gridContainer.innerHTML = '';
+            
+            ai_news_sites.forEach(site => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.setAttribute('data-name', site.name.toLowerCase());
+                
+                // 카드 내용 생성
+                card.innerHTML = `
+                    <div class="card-header">
+                        <h2>${site.name}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="infographic-icon">${getSiteIcon(site.name)}</div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="${site.url}" target="_blank" class="btn">사이트 방문</a>
+                    </div>
+                `;
+                
+                // 카드 클릭 시 iframe 보기로 전환
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('btn')) {
+                        viewSiteInIframe(site.url, site.name);
+                        document.body.classList.add('iframe-view');
+                        gridViewBtn.classList.remove('active');
+                        iframeViewBtn.classList.add('active');
+                    }
+                });
+                
+                gridContainer.appendChild(card);
+            });
+        }
+        
+        // iframe 네비게이션 버튼 생성
+        function createIframeNavButtons() {
+            iframeNav.innerHTML = '';
+            
+            ai_news_sites.forEach(site => {
+                const button = document.createElement('button');
+                button.textContent = site.name;
+                button.addEventListener('click', () => {
+                    viewSiteInIframe(site.url, site.name);
+                    // 활성 버튼 표시
+                    document.querySelectorAll('.iframe-nav button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    button.classList.add('active');
+                });
+                
+                iframeNav.appendChild(button);
+            });
+            
+            // 첫 번째 버튼을 기본적으로 활성화
+            if (iframeNav.firstChild) {
+                iframeNav.firstChild.classList.add('active');
+            }
+        }
+        
+        // iframe에서 사이트 보기
+        function viewSiteInIframe(url, name) {
+            siteIframe.src = url;
+            
+            // 해당 사이트의 버튼 활성화
+            document.querySelectorAll('.iframe-nav button').forEach(btn => {
+                if (btn.textContent === name) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        // 검색 및 필터링 기능 구현
+        searchInput.addEventListener('input', filterSites);
+        
+        // 카테고리 필터링 기능 구현
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 활성 버튼 상태 변경
+                document.querySelectorAll('.category-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                
+                // 사이트 필터링
+                filterSites();
+            });
+        });
+        
+        // 사이트 필터링 함수
+        function filterSites() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
+            
+            document.querySelectorAll('.card').forEach(card => {
+                const siteName = card.getAttribute('data-name');
+                const site = ai_news_sites.find(s => s.name.toLowerCase() === siteName);
+                const siteCategory = site ? site.category : '';
+                
+                // 검색어 및 카테고리 필터링
+                const matchesSearch = siteName.includes(searchTerm);
+                const matchesCategory = activeCategory === 'all' || siteCategory === activeCategory;
+                
+                if (matchesSearch && matchesCategory) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+        
+        // 보기 전환 기능
+        gridViewBtn.addEventListener('click', () => {
+            document.body.classList.remove('iframe-view');
+            gridViewBtn.classList.add('active');
+            iframeViewBtn.classList.remove('active');
+        });
+        
+        iframeViewBtn.addEventListener('click', () => {
+            document.body.classList.add('iframe-view');
+            gridViewBtn.classList.remove('active');
+            iframeViewBtn.classList.add('active');
+            
+            // 첫 번째 사이트를 기본으로 표시
+            if (siteIframe.src === '' && ai_news_sites.length > 0) {
+                viewSiteInIframe(ai_news_sites[0].url, ai_news_sites[0].name);
+            }
+        });
+        
+        // 초기화
+        createSiteCards();
+        createIframeNavButtons();
+        
+        // 첫 번째 사이트 URL 설정
+        if (ai_news_sites.length > 0) {
+            siteIframe.src = ai_news_sites[0].url;
+        }
+    </script>
+</body>
+</html>
